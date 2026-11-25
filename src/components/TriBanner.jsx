@@ -1,4 +1,5 @@
 import ShopLink from './ShopLink';
+import { imageUrl } from '../urls';
 import { categoryPath } from '../storefront';
 
 const collections = [
@@ -12,7 +13,7 @@ export default function TriBanner({ onNavigate }) {
     <nav className="collections-grid" aria-label="Clothing categories">
       {collections.map(({ category, title, image }) => (
         <ShopLink key={category} className="collection-card" href={categoryPath(category)} onNavigate={onNavigate}>
-          <img src={image} alt="" loading="lazy" decoding="async" />
+          <img src={imageUrl(image)} alt="" loading="lazy" decoding="async" />
           <span>{title}</span>
         </ShopLink>
       ))}

@@ -1,3 +1,5 @@
+import { routeHref } from '../urls';
+
 export default function ShopLink({ href, onNavigate, onClick, children, ...props }) {
   function handleClick(event) {
     onClick?.(event);
@@ -6,5 +8,5 @@ export default function ShopLink({ href, onNavigate, onClick, children, ...props
     onNavigate(href);
   }
 
-  return <a href={href} {...props} onClick={handleClick}>{children}</a>;
+  return <a href={routeHref(href)} {...props} onClick={handleClick}>{children}</a>;
 }

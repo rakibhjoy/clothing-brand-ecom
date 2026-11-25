@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { imageUrl } from '../urls';
 import { CATEGORIES } from '../data/products';
 import { COLLECTIONS } from '../data/collections';
 import { categoryPath, findProducts } from '../storefront';
@@ -14,7 +15,7 @@ export default function CatalogView({ products, route, collection, onNavigate, .
     <section className="catalog" aria-labelledby="catalog-title">
       {collection && (
         <div id="catalog-banner" className="catalog-hero">
-          <img className="catalog-hero-image" src={collection.image} alt="" style={{ objectPosition: collection.position }} />
+          <img className="catalog-hero-image" src={imageUrl(collection.image)} alt="" style={{ objectPosition: collection.position }} />
           <div className="container catalog-hero-content">
             <h1 id="catalog-title">{collection.title}</h1>
             <p>{collection.description}</p>

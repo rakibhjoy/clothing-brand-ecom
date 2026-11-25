@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { imageUrl } from '../urls';
 import { ImageOff } from 'lucide-react';
 
 export function ProductImage({ src, alt, loading = 'lazy', className = '' }) {
@@ -10,5 +11,5 @@ export function ProductImage({ src, alt, loading = 'lazy', className = '' }) {
       </span>
     );
   }
-  return <img className={className} src={src} alt={alt} loading={loading} decoding="async" onError={() => setFailed(src)} />;
+  return <img className={className} src={imageUrl(src)} alt={alt} loading={loading} decoding="async" onError={() => setFailed(src)} />;
 }

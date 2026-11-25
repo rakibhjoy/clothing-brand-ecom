@@ -62,11 +62,19 @@ export function normalizeCategory(value) {
 }
 
 export function readRoute(location) {
-  const hashRoute = location.pathname === '/' && location.hash.startsWith('#/')
-    ? new URL(location.hash.slice(1), location.origin)
-    : location;
-  const pathname = hashRoute.pathname.replace(/\/+$/, '') || '/';
-  const params = new URLSearchParams(hashRoute.search);
+  const base = import.meta.env.BASE_URL;
+  let { pathname, search } = location;
+  if (pathname === base.slice(0, -1)) pathname = '/';
+  else if (pathname.startsWith(base)) pathname = pathname.slice(base.length - 1);
+
+  if (pathname === '/' && location.hash.startsWith('#/')) {
+    const hashRoute = new URL(location.hash.slice(1), location.origin);
+    pathname = hashRoute.pathname;
+    search = hashRoute.search;
+  }
+
+  pathname = pathname.replace(/\/+$/, '') || '/';
+  const params = new URLSearchParams(search);
 
   if (pathname.startsWith('/product/')) {
     try {

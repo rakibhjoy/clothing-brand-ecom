@@ -22,6 +22,7 @@ import {
   GUEST, loadStorefront, productName, productPath, readRoute, readStored, recordOrder, writeStored
 } from './storefront';
 import { getSessionProfile, saveSession } from './accounts';
+import { routeHref } from './urls';
 
 const pageTitles = {
   catalog: 'Shop', cart: 'Shopping bag', checkout: 'Checkout', orders: 'Orders', wishlist: 'Saved items',
@@ -84,9 +85,10 @@ export default function App() {
 
   function navigate(path, { scroll = true, replace = false } = {}) {
     const current = window.location.pathname + window.location.search + window.location.hash;
-    if (current !== path) {
-      if (replace) window.history.replaceState(null, '', path);
-      else window.history.pushState(null, '', path);
+    const href = routeHref(path);
+    if (current !== href) {
+      if (replace) window.history.replaceState(null, '', href);
+      else window.history.pushState(null, '', href);
     }
     setRoute(readRoute(window.location));
     if (scroll) {
@@ -179,7 +181,10 @@ export default function App() {
 
   return (
     <div className="site-shell">
-      <a className="skip-link" href="#main-content">Skip to content</a>
+      <a className="skip-link" href="#main-content" onClick={(event) => {
+        event.preventDefault();
+        document.getElementById('main-content')?.focus();
+      }}>Skip to content</a>
       <Navbar route={route} bannerId={bannerId} onNavigate={navigate} cartCount={cartCount} accountPath={accountPath} savedCount={store.wishlist.length} />
       <main id="main-content" tabIndex={-1}>
         {route.view === 'home' && (
