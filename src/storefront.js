@@ -4,7 +4,7 @@ export const FREE_SHIPPING_MINIMUM = 3000;
 export const BAG_LIMIT = 99;
 export const GUEST = { isLoggedIn: false };
 
-const pages = ['cart', 'orders', 'wishlist', 'profile', 'login', 'register'];
+const pages = ['cart', 'wishlist', 'profile', 'login', 'register'];
 const money = new Intl.NumberFormat('en-BD', {
   style: 'currency', currency: 'BDT', currencyDisplay: 'narrowSymbol', maximumFractionDigits: 2, minimumFractionDigits: 0
 });
@@ -19,6 +19,18 @@ export function productCategory(product) {
 export const productCode = (product) => product.id.toUpperCase();
 export const variantProductName = (product) => product.styleName || productName(product);
 export const productPath = (id) => '/product/' + encodeURIComponent(id);
+export function directCheckoutPath(id, color, size, quantity) {
+  const params = new URLSearchParams({ product: id, color, size, quantity });
+  return '/checkout?' + params;
+}
+
+export function getDirectCheckoutItem({ id, color, size, quantity }) {
+  const product = getProduct(id);
+  const count = Number(quantity);
+  if (!product || !productSku(product, color, size) || !Number.isInteger(count) || count < 1 || count > BAG_LIMIT) return null;
+  return createCartItem(product, color, size, count);
+}
+
 export const categoryPath = (category) => category === 'ALL' ? '/catalog' : '/catalog?cat=' + encodeURIComponent(category);
 export const cartKey = (item) => JSON.stringify([item.id, item.selectedColor, item.selectedVariant]);
 export const getProduct = (id) => typeof id === 'string'
@@ -78,6 +90,16 @@ export function readRoute(location) {
   }
 
   const page = pathname === '/' ? params.get('view') : pathname.slice(1);
+  if (pathname === '/checkout') {
+    const purchase = params.has('product') ? {
+      id: params.get('product'),
+      color: params.get('color'),
+      size: params.get('size'),
+      quantity: params.get('quantity')
+    } : null;
+    return { view: 'checkout', purchase };
+  }
+  if (page === 'orders') return { view: 'orders', confirmedOrderId: params.get('order') };
   if (pages.includes(page)) return { view: page };
   return { view: pathname === '/' ? 'home' : 'missing' };
 }

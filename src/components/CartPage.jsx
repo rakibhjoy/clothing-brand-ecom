@@ -5,7 +5,7 @@ import { BAG_LIMIT, cartKey, formatPrice, getCartTotals, productName, productPat
 import { ProductImage } from './Media';
 import ShopLink from './ShopLink';
 
-export default function CartPage({ cart, promo, city, onNavigate, onUpdateQuantity, onApplyPromo, onCheckout }) {
+export default function CartPage({ cart, promo, city, onNavigate, onUpdateQuantity, onApplyPromo }) {
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
   const totals = getCartTotals(cart, promo, city);
@@ -77,7 +77,7 @@ export default function CartPage({ cart, promo, city, onNavigate, onUpdateQuanti
                 {error && <p className="form-error" role="alert">{error}</p>}
               </form>
             )}
-            <button type="button" className="button button-dark full-width" onClick={onCheckout}>Continue to checkout</button>
+            <ShopLink className="button button-dark full-width" href="/checkout" onNavigate={onNavigate}>Continue to checkout</ShopLink>
           </aside>
         </div>
       )}

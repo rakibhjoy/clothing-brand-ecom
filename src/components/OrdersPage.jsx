@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Package } from 'lucide-react';
+import { CircleCheck, Package } from 'lucide-react';
 import { cartKey, formatPrice, getProduct, productName, productPath } from '../storefront';
 import { ProductImage } from './Media';
 import ShopDialog from './ShopDialog';
@@ -23,9 +23,10 @@ function OrderTotals({ order }) {
   );
 }
 
-export default function OrdersPage({ orders, onNavigate }) {
+export default function OrdersPage({ orders, confirmedOrderId, onNavigate }) {
   const [query, setQuery] = useState('');
   const [receipt, setReceipt] = useState(null);
+  const confirmed = orders.find((order) => order.id === confirmedOrderId);
   const search = query.trim().toLowerCase();
   const results = [...orders].sort((a, b) => String(b.date).localeCompare(String(a.date))).filter((order) =>
     [order.id, order.trackingNumber, order.status, ...order.items.map((item) => item.name)]
@@ -35,6 +36,15 @@ export default function OrdersPage({ orders, onNavigate }) {
   return (
     <section className="container page-section orders-page">
       <div className="page-heading"><h1>Order history</h1><p>Orders saved in this browser.</p></div>
+      {confirmed && (
+        <section className="checkout-confirmation" aria-labelledby="order-confirmation-title">
+          <CircleCheck size={24} aria-hidden="true" />
+          <div>
+            <h2 id="order-confirmation-title">Demo order saved</h2>
+            <p>{confirmed.id} &middot; {confirmed.paymentMethod} &middot; {formatPrice(confirmed.total)}</p>
+          </div>
+        </section>
+      )}
       {orders.length > 1 && (
         <label className="order-search">Find an order<input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Order number, product or status" /></label>
       )}
@@ -85,6 +95,7 @@ export default function OrdersPage({ orders, onNavigate }) {
             {receipt.sandbox && <p className="muted">Demo order. No payment was collected.</p>}
             <dl className="receipt-address">
               {receipt.customerName && <div><dt>Customer</dt><dd>{receipt.customerName}</dd></div>}
+              {receipt.customerPhone && <div><dt>Phone number</dt><dd>{receipt.customerPhone}</dd></div>}
               <div><dt>Delivery address</dt><dd>{receipt.deliveryAddress}</dd></div>
               <div><dt>Payment method</dt><dd>{receipt.paymentMethod}</dd></div>
             </dl>

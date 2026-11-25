@@ -37,7 +37,7 @@ export default function ProductCard({ product, onNavigate, savedIds, onToggleSav
       <PhotoControls total={photos.length} index={photoIndex} onChange={setPhotoIndex} label={name + " photos"} />
       <button type="button" className="icon-button card-save" aria-pressed={saved}
         aria-label={(saved ? 'Remove ' : 'Save ') + name} onClick={() => onToggleSaved(product)}>
-        <Heart size={19} fill={saved ? 'currentColor' : 'none'} />
+        <Heart size={20} fill={saved ? 'currentColor' : 'none'} />
       </button>
     </article>
   );

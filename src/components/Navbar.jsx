@@ -11,12 +11,11 @@ const links = [
   { label: 'Shop all', href: '/catalog' }
 ];
 
-export default function Navbar({ route, onNavigate, cartCount, accountPath, savedCount }) {
+export default function Navbar({ route, bannerId, onNavigate, cartCount, accountPath, savedCount }) {
   const [panel, setPanel] = useState('');
   const [query, setQuery] = useState('');
   const [overHero, setOverHero] = useState(true);
   const header = useRef(null);
-  const isHome = route.view === 'home';
   const field = useRef(null);
   const searchTrigger = useRef(null);
   const searchQuery = route.view === 'catalog' ? route.query : '';
@@ -26,12 +25,12 @@ export default function Navbar({ route, onNavigate, cartCount, accountPath, save
   }, [panel]);
 
   useEffect(() => {
-    if (!isHome) {
+    if (!bannerId) {
       setOverHero(true);
       return;
     }
 
-    const banner = document.getElementById('home-banner');
+    const banner = document.getElementById(bannerId);
     const navigation = header.current;
     if (!banner || !navigation) return;
 
@@ -46,9 +45,9 @@ export default function Navbar({ route, onNavigate, cartCount, accountPath, save
       window.removeEventListener('scroll', updateHeader);
       window.removeEventListener('resize', updateHeader);
     };
-  }, [isHome]);
+  }, [bannerId]);
 
-  const headerClass = ['site-header', isHome && 'site-header-home', isHome && overHero && 'site-header-over-hero']
+  const headerClass = ['site-header', bannerId && 'site-header-overlay', bannerId && overHero && 'site-header-over-hero']
     .filter(Boolean).join(' ');
 
   function follow(path) {
@@ -79,7 +78,7 @@ export default function Navbar({ route, onNavigate, cartCount, accountPath, save
   return (
     <header ref={header} className={headerClass}>
       <div className="announcement">Free delivery on orders of ৳3,000 or more</div>
-      <div className="container header-inner">
+      <div className="header-inner">
         <button type="button" className="icon-button menu-trigger" onClick={() => setPanel('menu')} aria-label="Open menu"><Menu size={23} /></button>
         <ShopLink className="wordmark" href="/" onNavigate={follow} aria-label="Rogue & Raw home">ROGUE<span>&amp;</span>RAW.</ShopLink>
         <nav className="primary-nav" aria-label="Main navigation">
@@ -100,7 +99,7 @@ export default function Navbar({ route, onNavigate, cartCount, accountPath, save
       </div>
       {panel === 'search' && (
         <div className="search-panel" id="shop-search" onKeyDown={(event) => { if (event.key === 'Escape') closeSearch(); }}>
-          <form className="container search-form" role="search" onSubmit={search}>
+          <form className="search-form" role="search" onSubmit={search}>
             <label className="sr-only" htmlFor="shop-search-input">Search clothing</label>
             <input id="shop-search-input" ref={field} type="search" value={query} onChange={(event) => setQuery(event.target.value)}
               maxLength={100} placeholder="Search products, categories or codes" />

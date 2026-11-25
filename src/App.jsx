@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Bell } from 'lucide-react';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import TriBanner from './components/TriBanner';
@@ -11,18 +12,19 @@ import OrdersPage from './components/OrdersPage';
 import WishlistView from './components/WishlistView';
 import AuthPage from './components/AuthPage';
 import ProfilePage from './components/ProfilePage';
-import CheckoutModal from './components/CheckoutModal';
+import CheckoutPage from './components/CheckoutPage';
 import Footer from './components/Footer';
 import ShopLink from './components/ShopLink';
 import { PRODUCTS } from './data/products';
+import { COLLECTIONS } from './data/collections';
 import {
-  addCartItem, BAG_LIMIT, cartKey, createCartItem, getProduct,
-  GUEST, loadStorefront, productName, readRoute, recordOrder, writeStored
+  addCartItem, BAG_LIMIT, cartKey, createCartItem, directCheckoutPath, getDirectCheckoutItem, getProduct,
+  GUEST, loadStorefront, productName, productPath, readRoute, readStored, recordOrder, writeStored
 } from './storefront';
 import { getSessionProfile, saveSession } from './accounts';
 
 const pageTitles = {
-  catalog: 'Shop', cart: 'Shopping bag', orders: 'Orders', wishlist: 'Saved items',
+  catalog: 'Shop', cart: 'Shopping bag', checkout: 'Checkout', orders: 'Orders', wishlist: 'Saved items',
   profile: 'Account', login: 'Sign in', register: 'Create an account', missing: 'Page unavailable'
 };
 
@@ -32,17 +34,21 @@ export default function App() {
   const [route, setRoute] = useState(() => readRoute(window.location));
   const [store, setStore] = useState(loadStorefront);
   const [user, setUser] = useState(getSessionProfile);
-  const [checkout, setCheckout] = useState(null);
   const [notice, setNotice] = useState(null);
   const accountPath = user.isLoggedIn ? '/profile' : '/login';
   const product = route.view === 'product' ? getProduct(route.id) : undefined;
+  const collection = route.view === 'catalog' && !route.query ? COLLECTIONS[route.category] : null;
+  const bannerId = route.view === 'home' ? 'home-banner' : collection && 'catalog-banner';
+  const directItem = route.purchase ? getDirectCheckoutItem(route.purchase) : null;
+  const checkoutItems = route.purchase ? (directItem ? [directItem] : []) : store.cart;
+  const returnProduct = route.purchase ? getProduct(route.purchase.id) : null;
+  const checkoutReturnPath = route.purchase ? (returnProduct ? productPath(returnProduct.id) : '/catalog') : '/cart';
   const orders = store.orders.filter((order) => (order.ownerId || 'guest') === (user.id || 'guest'));
   const cartCount = store.cart.reduce((total, item) => total + item.quantity, 0);
   const missing = route.view === 'missing' || (route.view === 'product' && !product);
 
   useEffect(() => {
     function syncRoute() {
-      setCheckout(null);
       setRoute(readRoute(window.location));
     }
 
@@ -62,9 +68,9 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const title = missing ? pageTitles.missing : product ? productName(product) : pageTitles[route.view];
+    const title = missing ? pageTitles.missing : product ? productName(product) : collection?.title || pageTitles[route.view];
     document.title = title ? title + ' | Rogue & Raw' : 'Rogue & Raw | Everyday Streetwear';
-  }, [missing, product, route.view]);
+  }, [collection, missing, product, route.view]);
 
   useEffect(() => {
     writeStored('localStorage', 'rr_storefront', store);
@@ -76,10 +82,12 @@ export default function App() {
     return () => window.clearTimeout(timeout);
   }, [notice]);
 
-  function navigate(path, { scroll = true } = {}) {
+  function navigate(path, { scroll = true, replace = false } = {}) {
     const current = window.location.pathname + window.location.search + window.location.hash;
-    if (current !== path) window.history.pushState(null, '', path);
-    setCheckout(null);
+    if (current !== path) {
+      if (replace) window.history.replaceState(null, '', path);
+      else window.history.pushState(null, '', path);
+    }
     setRoute(readRoute(window.location));
     if (scroll) {
       window.scrollTo(0, 0);
@@ -142,12 +150,24 @@ export default function App() {
   }
 
   function completeOrder(order) {
-    const next = recordOrder(store, order, user.id || 'guest', checkout.kind === 'cart');
-    if (!writeStored('localStorage', 'rr_storefront', next)) return false;
+    const fromBag = !route.purchase;
+    const current = readStored('localStorage', 'rr_storefront', null) ? loadStorefront() : store;
+    if (fromBag && (current.promo !== store.promo || current.cart.length !== order.items.length ||
+        current.cart.some((item, index) => {
+          const selected = order.items[index];
+          return cartKey(item) !== cartKey(selected) || item.quantity !== selected.quantity || item.price !== selected.price;
+        }))) {
+      setStore(current);
+      return 'Your bag changed. Review the updated order summary and try again.';
+    }
+
+    const next = recordOrder(current, order, user.id || 'guest', fromBag);
+    if (!writeStored('localStorage', 'rr_storefront', next)) {
+      return 'The order could not be saved. Check your browser storage settings and try again.';
+    }
     setStore(next);
-    navigate('/orders');
-    notify('Demo order saved on this device.');
-    return true;
+    navigate('/orders?order=' + encodeURIComponent(order.id), { replace: true });
+    return '';
   }
 
   const shopping = {
@@ -160,7 +180,7 @@ export default function App() {
   return (
     <div className="site-shell">
       <a className="skip-link" href="#main-content">Skip to content</a>
-      <Navbar route={route} onNavigate={navigate} cartCount={cartCount} accountPath={accountPath} savedCount={store.wishlist.length} />
+      <Navbar route={route} bannerId={bannerId} onNavigate={navigate} cartCount={cartCount} accountPath={accountPath} savedCount={store.wishlist.length} />
       <main id="main-content" tabIndex={-1}>
         {route.view === 'home' && (
           <>
@@ -171,28 +191,30 @@ export default function App() {
             <HomeSections products={bestSellers} category="BEST SELLERS" title="Best sellers" {...shopping} />
           </>
         )}
-        {route.view === 'catalog' && <CatalogView products={PRODUCTS} route={route} {...shopping} />}
+        {route.view === 'catalog' && <CatalogView products={PRODUCTS} route={route} collection={collection} {...shopping} />}
         {product && (
           <ProductDetailsPage
             key={product.id}
             product={product}
             allProducts={PRODUCTS}
-            onBuyNow={(color, size, quantity) => setCheckout({
-              kind: 'direct', items: [createCartItem(product, color, size, quantity)]
-            })}
+            onBuyNow={(color, size, quantity) => navigate(directCheckoutPath(product.id, color, size, quantity))}
             {...shopping}
           />
         )}
         {route.view === 'cart' && (
           <CartPage cart={store.cart} promo={store.promo} city={user.city} onNavigate={navigate}
             onUpdateQuantity={updateQuantity}
-            onApplyPromo={(promo) => setStore((current) => ({ ...current, promo }))}
-            onCheckout={() => setCheckout({ kind: 'cart', items: store.cart })} />
+            onApplyPromo={(promo) => setStore((current) => ({ ...current, promo }))} />
+        )}
+        {route.view === 'checkout' && (
+          <CheckoutPage key={window.location.pathname + window.location.search + window.location.hash}
+            items={checkoutItems} promo={route.purchase ? '' : store.promo} user={user}
+            direct={Boolean(route.purchase)} returnPath={checkoutReturnPath} onNavigate={navigate} onComplete={completeOrder} />
         )}
         {route.view === 'wishlist' && (
           <WishlistView wishlist={store.wishlist.map(getProduct).filter(Boolean)} {...shopping} />
         )}
-        {route.view === 'orders' && <OrdersPage orders={orders} onNavigate={navigate} />}
+        {route.view === 'orders' && <OrdersPage orders={orders} confirmedOrderId={route.confirmedOrderId} onNavigate={navigate} />}
         {((route.view === 'profile' && !user.isLoggedIn) || (['login', 'register'].includes(route.view) && !user.isLoggedIn)) && (
           <AuthPage key={route.view} mode={route.view === 'register' ? 'register' : 'login'} onNavigate={navigate} onLogin={login} />
         )}
@@ -211,12 +233,13 @@ export default function App() {
         )}
       </main>
       <Footer onNavigate={navigate} accountPath={accountPath} />
-      {checkout && (
-        <CheckoutModal items={checkout.items} promo={checkout.kind === 'cart' ? store.promo : ''}
-          user={user} onClose={() => setCheckout(null)} onComplete={completeOrder} />
-      )}
       <div className="notice-region" role="status" aria-live="polite">
-        {notice && <span>{notice.message}</span>}
+        {notice && (
+          <div className="notice-toast">
+            <Bell className="notice-toast-icon" aria-hidden="true" />
+            <span>{notice.message}</span>
+          </div>
+        )}
       </div>
     </div>
   );
