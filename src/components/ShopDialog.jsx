@@ -6,12 +6,17 @@ export default function ShopDialog({ title, onClose, children, className = '' })
 
   useEffect(() => {
     const dialog = ref.current;
+    const opener = document.activeElement;
     const previousOverflow = document.body.style.overflow;
     dialog.showModal();
     document.body.style.overflow = 'hidden';
     return () => {
+      const active = document.activeElement;
       dialog.close();
       document.body.style.overflow = previousOverflow;
+      if ((active === document.body || dialog.contains(active)) && opener instanceof HTMLElement && opener.isConnected) {
+        opener.focus({ preventScroll: true });
+      }
     };
   }, []);
 

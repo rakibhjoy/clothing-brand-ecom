@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Bell } from 'lucide-react';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
+import GarmentStudio from './components/GarmentStudio';
 import TriBanner from './components/TriBanner';
 import HomeSections from './components/HomeSections';
 import DenimEdit from './components/DenimEdit';
@@ -191,6 +192,7 @@ export default function App() {
           <>
             <Hero onNavigate={navigate} />
             <TriBanner onNavigate={navigate} />
+            <GarmentStudio onNavigate={navigate} />
             <HomeSections products={PRODUCTS} category="NEW ARRIVALS" title="New arrivals" {...shopping} />
             <DenimEdit onNavigate={navigate} />
             <HomeSections products={bestSellers} category="BEST SELLERS" title="Best sellers" {...shopping} />

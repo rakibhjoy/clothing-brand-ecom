@@ -1,5 +1,17 @@
+import { ArrowDown } from 'lucide-react';
 import ShopLink from './ShopLink';
 import { imageUrl } from '../urls';
+
+function jumpToStudio(event) {
+  if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+  const studio = document.getElementById('garment-studio');
+  if (!studio) return;
+
+  event.preventDefault();
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  studio.focus({ preventScroll: true });
+  studio.scrollIntoView({ behavior: reduceMotion ? 'instant' : 'smooth' });
+}
 
 export default function Hero({ onNavigate }) {
   return (
@@ -11,7 +23,10 @@ export default function Hero({ onNavigate }) {
       <div className="container hero-content">
         <h1 id="hero-title">Built to <br />live in.</h1>
         <p className="hero-description">Heavyweight tees, relaxed denim and easy layers for every day.</p>
-        <ShopLink className="button button-light hero-action" href="/catalog" onNavigate={onNavigate}>Shop the collection</ShopLink>
+        <div className="hero-actions">
+          <ShopLink className="button button-light hero-action" href="/catalog" onNavigate={onNavigate}>Shop the collection</ShopLink>
+          <a className="button hero-studio-link" href="#garment-studio" onClick={jumpToStudio}>Explore the studio <ArrowDown size={17} /></a>
+        </div>
       </div>
     </section>
   );

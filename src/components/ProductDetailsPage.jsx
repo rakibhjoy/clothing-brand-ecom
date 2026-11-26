@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Check, Heart, Link2 } from 'lucide-react';
+import { Check, Heart, Link2, ScanSearch } from 'lucide-react';
 import {
   categoryPath, formatPrice, FREE_SHIPPING_MINIMUM, getProductPhotos, normalizeCategory,
   photoKey, productCategory, productCode, productSku, variantProductName
 } from '../storefront';
 import ProductCard from './ProductCard';
+import ProductInspector from './ProductInspector';
 import { ProductImage } from './Media';
 import PhotoControls from './PhotoControls';
 import ShopDialog from './ShopDialog';
@@ -20,6 +21,7 @@ export default function ProductDetailsPage({ product, allProducts, onNavigate, o
   const [size, setSize] = useState(product.sizes.length === 1 ? product.sizes[0] : '');
   const [quantity, setQuantity] = useState(1);
   const [photoIndex, setPhotoIndex] = useState(0);
+  const [inspecting, setInspecting] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
   const [sizeError, setSizeError] = useState(false);
   const [shareMessage, setShareMessage] = useState('');
@@ -81,7 +83,11 @@ export default function ProductDetailsPage({ product, allProducts, onNavigate, o
       <div className="product-layout">
         <div className="product-gallery">
           <div className="gallery-main">
-            <ProductImage src={images[photoIndex]} alt={name + (images.length > 1 ? ', photo ' + (photoIndex + 1) : '')} loading="eager" />
+            <button type="button" className="gallery-inspect" aria-haspopup="dialog" aria-label={'Inspect ' + name}
+              onClick={() => setInspecting(true)}>
+              <ProductImage src={images[photoIndex]} alt="" loading="eager" />
+              <span className="gallery-inspect-label"><ScanSearch size={18} /> Inspect garment</span>
+            </button>
             <PhotoControls total={images.length} index={photoIndex} onChange={showPhoto} label={name + " photos"} showCount />
           </div>
           {product.imageIsMockup && <p className="product-photo-caption">Product mockup</p>}
@@ -169,6 +175,7 @@ export default function ProductDetailsPage({ product, allProducts, onNavigate, o
           <div className="product-grid">{related.map((item) => <ProductCard key={item.id} product={item} {...cardActions} />)}</div>
         </section>
       )}
+      {inspecting && <ProductInspector product={product} initialPhoto={photoIndex} onClose={() => setInspecting(false)} />}
       {guideOpen && (
         <ShopDialog title="Size guide" onClose={() => setGuideOpen(false)}>
           <p>{product.modelFit}</p>
